@@ -1,31 +1,61 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
 from .models import Friend
-from .forms import HelloForm
+# from .forms import HelloForm
+from .forms import FriendForm
+from django.views.generic import ListView
+from django.views.generic import DetailView
 
 def index(request):
     data = Friend.objects.all()
     params = {
         'title': 'Hello',
-        'data': [],
+        'data': data,
     }
     return render(request, 'hello/index.html', params)
 
 #create model
 def create(request):
+    if(request.method == 'POST'):
+        obj = Friend()
+        friend = FriendForm(request.POST, instance=obj)
+        friend.save()
+        return redirect(to = '/hello')
     params = {
         'title':'Hello',
-        'form': HelloForm(),
+        'form':FriendForm(),
     }
-    if (request.method == 'POST'):
-        name = request.POST['name']
-        mail = request.POST['mail']
-        gender = 'gender' in request.POST
-        age = int(request.POST['age'])
-        birth = request.POST['birthday']
+    return render(request, 'hello/create.html', params)
 
-        friend = Friend(name=name,mail=mail,gender=gender,age=age,birthday=birth,)
+#update model
+def edit(request, num):
+    obj = Friend.objects.get(id=num)
+    if (request.method == 'POST'):
+        friend = FriendForm(request.POST, instance=obj)
         friend.save()
         return redirect(to='/hello')
-    return render(request, 'hello/create.html', params)
+    params = {
+        'title':'Hello',
+        'id':num,
+        'form':FriendForm(instance=obj),
+    }
+    return render(request, 'hello/edit.html', params)
+
+def delete(request, num):
+    friend = Friend.objects.get(id=num)
+    if (request.method == 'POST'):
+        friend.delete()
+        return redirect(to='/hello')
+    params = {
+        'title':'Hello',
+        'id':num,
+        'obj':friend,
+    }
+    return render(request, 'hello/delete.html', params)
+
+class FriendList(ListView):
+    model = Friend
+
+class FriendDetail(DetailView):
+    model = Friend
 
